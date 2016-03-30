@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This file is part of robotframework-smtplibrary.
+# https://github.io/lucamaro/robotframework-smtplibrary
+
+# Licensed under the Apache License 2.0 license:
+# http://www.opensource.org/licenses/Apache-2.0
+# Copyright (c) 2016, Luca Maragnani <luca.maragnani@gmail.com>
+
+from setuptools import setup, find_packages
+from robotframework_smtplibrary import __version__
+
+tests_require = [
+    'mock',
+    'nose',
+    'coverage',
+    'yanc',
+    'preggy',
+    'tox',
+    'ipdb',
+    'coveralls',
+    'sphinx',
+]
+
+setup(
+    name='robotframework-smtplibrary',
+    version=__version__,
+    description='This library aims to perform common smtp operation to be used in robotframework',
+    long_description='''
+This library aims to perform common smtp operation to be used in robotframework
+''',
+    keywords='robot framework testing automation smtp email mail softwaretesting',
+    author='Luca Maragnani',
+    author_email='luca.maragnani@gmail.com',
+    url='https://github.io/lucamaro/robotframework-smtplibrary',
+    license='Apache License 2.0',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache License 2.0 License',
+        'Natural Language :: English',
+        'Operating System :: Unix',
+        'Programming Language :: Python :: 2.7',
+        'Operating System :: OS Independent',
+    ],
+    packages=find_packages(),
+    include_package_data=False,
+    install_requires=[
+        # add your dependencies here
+        # remember to use 'package-name>=x.y.z,<x.y+1.0' notation (this way you get bugfixes)
+    ],
+    extras_require={
+        'tests': tests_require,
+    },
+    entry_points={
+        'console_scripts': [
+            # add cli scripts here in this form:
+            # 'robotframework-smtplibrary=robotframework_smtplibrary.cli:main',
+        ],
+    },
+)

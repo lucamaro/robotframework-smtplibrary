@@ -1,0 +1,22 @@
+# This file is part of robotframework-smtplibrary.
+# https://github.io/lucamaro/robotframework-smtplibrary
+
+# Licensed under the Apache License 2.0 license:
+# http://www.opensource.org/licenses/Apache-2.0
+# Copyright (c) 2016, Luca Maragnani <luca.maragnani@gmail.com>
+
+[run]
+omit =
+    *tests.py
+branch = True
+source =
+    robotframework_smtplibrary
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    from urllib.parse import parse_qs
+    except ImportError:
