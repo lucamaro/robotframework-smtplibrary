@@ -8,7 +8,9 @@
 # http://www.opensource.org/licenses/Apache-2.0
 # Copyright (c) 2016, Luca Maragnani <luca.maragnani@gmail.com>
 
-from SmtpLibrary.version import __version__  # NOQA
+"""
+Library implementation
+"""
 
 import smtplib
 import email
@@ -25,19 +27,22 @@ from email.mime.text import MIMEText
 from email import encoders
 import os.path
 import socket
+from robot.api.deco import keyword
+
+from SmtpLibrary.version import __version__  # NOQA
 
 COMMASPACE = ', '
 
 class SmtpLibrary(object):
-    '''
+    """
     SMTP Client class
-    '''
+    """
 
     def __init__(self):
-        '''
+        """
         Constructor
-        '''
-        self.message = MailMessage()
+        """
+        self.message = self._MailMessage()
         self.host = None
         self.port = None
         self.user = None
@@ -45,79 +50,109 @@ class SmtpLibrary(object):
         self.smtp = None
 
     def _prepare_connection(self, host, port, user=None, password=None):
+        """
+        Private method to collect connection informations
+        """
         self.host = host
         self.port = port
         self.user = user
         self.password = password
-        
-        
+
+
     def prepare_ssl_connection(self, host, port=465, user=None, password=None):
+        """
+        Collect connection informations for SSL channel
+        """
         self._prepare_connection(host, port, user, password)
         self.smtp = smtplib.SMTP_SSL()
 
-    def prepare_connection(self, host, port=25, user=None, password=None, use_ssl=False):
+    def prepare_connection(self, host, port=25, user=None, password=None):
+        """
+        Collect connection informations for unencrypted channel
+        """
         self._prepare_connection(host, port, user, password)
         self.smtp = smtplib.SMTP()
 
-    def add_to_recipients(self, toadd):
-        '''takes string as paramater'''
-        self.message.mailTo.append(toadd)
-        
-    def add_cc_recipients(self, cc):
-        '''takes string as parameter'''        
-        self.message.mailTo.append(cc)
+    def add_to_recipient(self, recipient):
+        """
+        Add a recipient to "To:" list
+        """
+        self.message.mail_to.append(recipient)
 
-    def add_bcc_recipients(self, bcc):
-        '''takes string as parameter'''        
-        self.message.mailBcc.append(bcc)
+    def add_cc_recipient(self, recipient):
+        """
+        Add a recipient to "Cc:" list
+        """
+        self.message.mail_cc.append(recipient)
+
+    def add_bcc_recipient(self, recipient):
+        """
+        Add a recipient to "Bcc:" list
+        """
+        self.message.mail_bcc.append(recipient)
 
     def set_subject(self, subj):
-        '''takes string as parameter'''
+        """
+        Set email subject
+        """
         self.message.subject = subj
-        
-    def set_from(self, fromadd):
-        '''takes string as parameter'''
-        self.message.mailFrom = fromadd
-        
+
+    def set_from(self, from_recipient):
+        """
+        Set from address of message and envelope
+        """
+        self.message.mail_from = from_recipient
+
     def set_body(self, body):
-        '''takes string as parameter'''
+        """
+        Set email body
+        """
         self.message.body = body
-        
+
     def set_random_body(self, size):
-        '''generate a random body of the size given'''
+        """
+        Set a random body of <size> length
+        """
         body = ''
-        for i in range(int(size)/80):
-            for x in range(80):
-                body += ''.join(random.choice(string.uppercase + string.digits))
-            body += "\n"
+        for i in range(0, size):
+            body += ''.join(random.choice(string.uppercase + string.digits))
+            if i % 80 == 0:
+                body += "\n"
         self.message.body = body
-      
-    def add_attachments(self, attach):
-        '''takes string as parameter representig the path to the file to attach'''  
+
+    def add_attachment(self, attach):
+        """
+        Add attachment to a list of filenames
+        """
         self.message.attachments.append(attach)
-        
+
+    def add_header(self, name, value):
+        """
+        Add a custom header to headers list
+        """
+        self.message.headers[name] = value
+
     def send_message(self):
-        '''
+        """
             Send the message
-        '''
-        
-        if len (self.message.attachments) > 0 : 
+        """
+        if len(self.message.attachments) > 0:
             envelope = MIMEMultipart()
             envelope.attach(MIMEText(self.message.body))
         else:
-            envelope =  MIMEText(self.message.body)
-        
+            envelope = MIMEText(self.message.body)
+
         envelope['Subject'] = self.message.subject
-        
+
         recipients = []
-        recipients.extend(self.message.mailTo)
-        recipients.extend(self.message.mailCc)
-        recipients.extend(self.message.mailBcc)
-        
-        envelope['From'] = self.message.mailFrom
-        envelope['To'] = COMMASPACE.join(self.message.mailTo)
-        envelope['Cc'] = COMMASPACE.join(self.message.mailCc)
-        
+        recipients.extend(self.message.mail_to)
+        recipients.extend(self.message.mail_cc)
+        recipients.extend(self.message.mail_bcc)
+
+        envelope['From'] = self.message.mail_from
+        envelope['To'] = COMMASPACE.join(self.message.mail_to)
+        envelope['Cc'] = COMMASPACE.join(self.message.mail_cc)
+
         envelope['Subject'] = self.message.subject
 
         for attachment in self.message.attachments:
@@ -130,105 +165,96 @@ class SmtpLibrary(object):
 
             msg = None
             if maintype == 'text':
-                fp = open(attachment)
+                attach_file = open(attachment)
                 # TODO: we should handle calculating the charset
-                msg = MIMEText(fp.read(), _subtype=subtype, _charset = 'utf-8')
-                fp.close()
+                msg = MIMEText(attach_file.read(), _subtype=subtype, _charset='utf-8')
+                attach_file.close()
             elif maintype == 'image':
-                fp = open(attachment, 'rb')
-                msg = MIMEImage(fp.read(), _subtype=subtype)
-                fp.close()
+                attach_file = open(attachment, 'rb')
+                msg = MIMEImage(attach_file.read(), _subtype=subtype)
+                attach_file.close()
             elif maintype == 'audio':
-                fp = open(attachment, 'rb')
-                msg = MIMEAudio(fp.read(), _subtype=subtype)
-                fp.close()
+                attach_file = open(attachment, 'rb')
+                msg = MIMEAudio(attach_file.read(), _subtype=subtype)
+                attach_file.close()
             else:
-                fp = open(attachment, 'rb')
+                attach_file = open(attachment, 'rb')
                 msg = MIMEBase(maintype, subtype)
-                msg.set_payload(fp.read())
-                fp.close()
+                msg.set_payload(attach_file.read())
+                attach_file.close()
                 # Encode the payload using Base64
-                encoders.encode_base64(msg)                
-    
+                encoders.encode_base64(msg)
+
             # Set the filename parameter
-            msg.add_header('Content-Disposition', 'attachment', filename=os.path.basename(attachment))
+            msg.add_header('Content-Disposition', 'attachment',
+                           filename=os.path.basename(attachment))
             envelope.attach(msg)
 
         # Send the message
         self.smtp.connect(self.host, self.port)
         self.smtp.ehlo(socket.gethostname())
-        
-        if self.user is not None:
-            self.smtp.login (self.user, self.password)
 
-        self.smtp.sendmail(self.message.mailFrom, recipients, envelope.as_string())
-        
+        if self.user is not None:
+            self.smtp.login(self.user, self.password)
+
+        self.smtp.sendmail(self.message.mail_from, recipients, envelope.as_string())
+
         self.smtp.close()
-        
-        
-        
-    def send_message_with_all_parameters(self, host, user, password, subj, fromadd, toadd, cc=None, bcc=None, body=None, attach=None):
-        '''cc, bcc and attach parameters may be strings or array of strings
+
+    @keyword('Send Message With All Parameters')
+    def send_message_full(self, host, user, password, subj,
+                          from_recipient, to_recipient, cc_recipient=None, bcc_recipient=None,
+                          body=None, attach=None):
+        """
+        Send a message specifing all parameters on the same linecc
+        cc, bcc and attach parameters may be strings or array of strings
         host, user, password, subj, fromadd, toadd - are mandatory parameters
         to use the optional paramaters pleas specify the name fo the parameter in the call
         user and password even if mandatory could be set to None so no authentication will be made
             Example:
-            sendMail("smtp.mail.com", None, None, "The subject", "me@mail.com", "friend@mai.com", body="Hello World body") 
-            
+            sendMail("smtp.mail.com", None, None, "The subject", "me@mail.com", "friend@mai.com", body="Hello World body")
+
             sendMail("smtp.mail.com", "scott", "tiger", "The subject", "me@mail.com", "friend@mai.com", body="Hello World body", attach=attaches
         where could be:
         attaches = ["c:\\desktop\\file1.zip", "c:\\desktop\\file2.zip"] or
-        attaches = "c:\\desktop\\file1.zip" '''
-     
+        attaches = "c:\\desktop\\file1.zip" """
+
         self.host = host
         self.user = user
         self.password = password
 
         self.set_subject(subj)
-        self.set_from(fromadd)
-        self.add_to_recipients(toadd)
-        if cc != None:
-            self.add_cc_recipients(cc)
-        if bcc != None:
-            self.add_bcc_recipients(bcc)
+        self.set_from(from_recipient)
+        self.message.mail_to = to_recipient
+        if cc_recipient != None:
+            self.message.mail_cc = cc_recipient
+        if bcc_recipient != None:
+            self.message.mail_bcc = bcc_recipient
         #Fill the message
         if body != None:
             self.set_body(body)
         # Part two is attachment
         if attach != None:
-            self.add_attachments(attach)
-        
+            self.message.attachments = attach
+
         self.send_message()
-        
-        
-class MailMessage :
-    ''' Simplified email message
-        This class represent email headers and payload content, not envelope data'''
-    
-    def __init__ (self):
-        self.id = None
-        self.uid = None
-        self.mailFrom = None
-        self.mailTo = []
-        self.mailCc = []
-        self.mailBcc = []
-        self.subject = ''
-        self.body = ''
-        self.attachments = []
-        self.size = -1
-        
-        # email.message
-        self.message = None
-        
-    def set_id (self, id):
-        self.id = id
-        
-    def set_uid (self, uid):
-        self.uid = uid
-        
-    def set_size(self, size):
-        self.size = size
-        
-    def get_size(self):
-        return self.size
-    
+
+
+    class _MailMessage:
+        """
+        Simplified email message
+        This class represent email headers and payload content, not envelope data
+        """
+
+        def __init__(self):
+            """
+            init object variables
+            """
+            self.mail_from = None
+            self.mail_to = []
+            self.mail_cc = []
+            self.mail_bcc = []
+            self.subject = ''
+            self.body = ''
+            self.attachments = []
+            self.headers = {}
