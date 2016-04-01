@@ -30,5 +30,6 @@ coverage-html: unit
 tox:
 	@tox
 
-#docs:
-	#@cd robotframework_smtplibrary/docs && make html && open _build/html/index.html
+docs:
+	@python -m robot.libdoc SmtpLibrary doc\SmtpLibrary.html
+
