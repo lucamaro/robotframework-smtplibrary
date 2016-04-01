@@ -10,7 +10,7 @@
 
 from preggy import expect
 
-from robotframework_smtplibrary import __version__
+from SmtpLibrary import __version__
 from tests.base import TestCase
 
 

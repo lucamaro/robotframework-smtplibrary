@@ -33,3 +33,5 @@ tox:
 docs:
 	@python -m robot.libdoc SmtpLibrary doc\SmtpLibrary.html
 
+pylint:
+	@pylint SmtpLibrary
