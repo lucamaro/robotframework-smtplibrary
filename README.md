@@ -8,12 +8,13 @@ This is a library for robotframework to send emails and test smtp protocol.
     cd robotframework-smtplibrary
     python setup.py install
 
+Then in robotframework scenario import library "SmtpLibrary" with no parameters.
+
 ## Roadmap
 
 This library is still under development
 
 + test coverage
-+ get smtp return codes and messages for protocol validation
 + starttls keyword
 + implement low level command bindings to implement various smtp scenarios
 + python 3 compatibility
