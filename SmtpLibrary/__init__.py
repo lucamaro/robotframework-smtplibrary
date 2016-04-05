@@ -28,6 +28,7 @@ from email import encoders
 import os.path
 import socket
 from robot.api.deco import keyword
+from robot.api import logger
 
 from SmtpLibrary.version import __version__  # NOQA
 
@@ -54,9 +55,10 @@ class SmtpLibrary(object):
         Private method to collect connection informations
         """
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.user = user
         self.password = password
+        self.client_hostname = socket.gethostname()
 
 
     def prepare_ssl_connection(self, host, port=465, user=None, password=None):
@@ -132,74 +134,97 @@ class SmtpLibrary(object):
         """
         self.message.headers[name] = value
 
+    def connect(self):
+        '''
+        Open connection to server
+        Returns tuple (smtp status code, message)
+        '''
+        return self.smtp.connect(self.host, self.port)
+
+    def present_client_as(self, client_hostname):
+        '''
+        Set helo/ehlo client identity
+        '''
+        self.client_hostname = client_hostname
+
+    def helo(self):
+        '''
+        Send HELO command
+        Returns tuple (smtp status code, message)
+        '''
+        result = self.smtp.helo(self.client_hostname)
+        logger.info(result)
+        return result
+
+    def ehlo(self):
+        '''
+        Send EHLO command
+        Returns tuple (smtp status code, message)
+        '''
+        result = self.smtp.ehlo(self.client_hostname)
+        logger.info(result)
+        return result
+
+    def get_esmtp_features(self):
+        '''
+        Returns hashmap with ESMTP feature received with EHLO
+        '''
+        logger.info(self.smtp.esmtp_features)
+        return self.smtp.esmtp_features
+
+    def login(self):
+        '''
+        Login user
+        Returns tuple (smtp status code, message)
+        '''
+        logger.info("Login with user " + self.user + " and password " + self.password)
+        result = self.smtp.login(self.user.encode('ascii'), self.password.encode('ascii'))
+        logger.info(result)
+        return result
+
+    def sendmail(self):
+        '''
+        Send email with "MAIL FROM:", "RCPT TO:" and "DATA" commands
+        Returns tuple (smtp status code, message)
+        '''
+        result = self.smtp.sendmail(self.message.mail_from, self.message.get_message_recipients(), self.message.get_message_as_string())
+        logger.info(result)
+        return result
+
+    def quit(self):
+        '''
+        Send QUIT command
+        Returns tuple (smtp status code, message)
+        '''
+        result = self.smtp.quit()
+        logger.info(result)
+        return result
+
+    def close_connection(self):
+        '''
+        Close connection to server
+        '''
+        return self.smtp.close()
+
     def send_message(self):
         """
-            Send the message
+        Send the message, from connection establishment to quit and close connection.
+        All the connection and email parameters must be already set before invocation.
+        Returns sendmail response (code, message)
         """
-        if len(self.message.attachments) > 0:
-            envelope = MIMEMultipart()
-            envelope.attach(MIMEText(self.message.body))
-        else:
-            envelope = MIMEText(self.message.body)
-
-        envelope['Subject'] = self.message.subject
-
-        recipients = []
-        recipients.extend(self.message.mail_to)
-        recipients.extend(self.message.mail_cc)
-        recipients.extend(self.message.mail_bcc)
-
-        envelope['From'] = self.message.mail_from
-        envelope['To'] = COMMASPACE.join(self.message.mail_to)
-        envelope['Cc'] = COMMASPACE.join(self.message.mail_cc)
-
-        envelope['Subject'] = self.message.subject
-
-        for attachment in self.message.attachments:
-            ctype, encoding = mimetypes.guess_type(attachment)
-            if ctype is None or encoding is not None:
-                # No guess could be made, or the file is encoded (compressed), so
-                # use a generic bag-of-bits type.
-                ctype = 'application/octet-stream'
-            maintype, subtype = ctype.split('/', 1)
-
-            msg = None
-            if maintype == 'text':
-                attach_file = open(attachment)
-                # TODO: we should handle calculating the charset
-                msg = MIMEText(attach_file.read(), _subtype=subtype, _charset='utf-8')
-                attach_file.close()
-            elif maintype == 'image':
-                attach_file = open(attachment, 'rb')
-                msg = MIMEImage(attach_file.read(), _subtype=subtype)
-                attach_file.close()
-            elif maintype == 'audio':
-                attach_file = open(attachment, 'rb')
-                msg = MIMEAudio(attach_file.read(), _subtype=subtype)
-                attach_file.close()
-            else:
-                attach_file = open(attachment, 'rb')
-                msg = MIMEBase(maintype, subtype)
-                msg.set_payload(attach_file.read())
-                attach_file.close()
-                # Encode the payload using Base64
-                encoders.encode_base64(msg)
-
-            # Set the filename parameter
-            msg.add_header('Content-Disposition', 'attachment',
-                           filename=os.path.basename(attachment))
-            envelope.attach(msg)
 
         # Send the message
-        self.smtp.connect(self.host, self.port)
-        self.smtp.ehlo(socket.gethostname())
+        self.connect()
 
         if self.user is not None:
-            self.smtp.login(self.user, self.password)
+            self.ehlo()
+            self.login()
 
-        self.smtp.sendmail(self.message.mail_from, recipients, envelope.as_string())
+        send_result = self.sendmail()
 
-        self.smtp.close()
+        self.quit()
+        self.close_connection()
+        return send_result
 
     @keyword('Send Message With All Parameters')
     def send_message_full(self, host, user, password, subj,
@@ -217,7 +242,9 @@ class SmtpLibrary(object):
             sendMail("smtp.mail.com", "scott", "tiger", "The subject", "me@mail.com", "friend@mai.com", body="Hello World body", attach=attaches
         where could be:
         attaches = ["c:\\desktop\\file1.zip", "c:\\desktop\\file2.zip"] or
-        attaches = "c:\\desktop\\file1.zip" """
+        attaches = "c:\\desktop\\file1.zip"
+        Returns sendmail response (code, message)
+        """
 
         self.host = host
         self.user = user
@@ -237,7 +264,7 @@ class SmtpLibrary(object):
         if attach != None:
             self.message.attachments = attach
 
-        self.send_message()
+        return self.send_message()
 
 
     class _MailMessage:
@@ -258,3 +285,70 @@ class SmtpLibrary(object):
             self.body = ''
             self.attachments = []
             self.headers = {}
+
+        def get_message_recipients(self):
+            '''
+            Get all message recipients (to, cc, bcc)
+            '''
+            recipients = []
+            recipients.extend(self.mail_to)
+            recipients.extend(self.mail_cc)
+            recipients.extend(self.mail_bcc)
+            return recipients
+
+        def get_message_as_string(self):
+            '''
+            Get message as string to be sent with smtplib.sendmail api
+            '''
+            if len(self.attachments) > 0:
+                envelope = MIMEMultipart()
+                envelope.attach(MIMEText(self.body))
+            else:
+                envelope = MIMEText(self.body)
+
+            envelope['Subject'] = self.subject
+
+            recipients = self.get_message_recipients()
+
+            envelope['From'] = self.mail_from
+            envelope['To'] = COMMASPACE.join(self.mail_to)
+            envelope['Cc'] = COMMASPACE.join(self.mail_cc)
+
+            envelope['Subject'] = self.subject
+
+            for attachment in self.attachments:
+                ctype, encoding = mimetypes.guess_type(attachment)
+                if ctype is None or encoding is not None:
+                    # No guess could be made, or the file is encoded (compressed), so
+                    # use a generic bag-of-bits type.
+                    ctype = 'application/octet-stream'
+                maintype, subtype = ctype.split('/', 1)
+
+                msg = None
+                if maintype == 'text':
+                    attach_file = open(attachment)
+                    # TODO: we should handle calculating the charset
+                    msg = MIMEText(attach_file.read(), _subtype=subtype, _charset='utf-8')
+                    attach_file.close()
+                elif maintype == 'image':
+                    attach_file = open(attachment, 'rb')
+                    msg = MIMEImage(attach_file.read(), _subtype=subtype)
+                    attach_file.close()
+                elif maintype == 'audio':
+                    attach_file = open(attachment, 'rb')
+                    msg = MIMEAudio(attach_file.read(), _subtype=subtype)
+                    attach_file.close()
+                else:
+                    attach_file = open(attachment, 'rb')
+                    msg = MIMEBase(maintype, subtype)
+                    msg.set_payload(attach_file.read())
+                    attach_file.close()
+                    # Encode the payload using Base64
+                    encoders.encode_base64(msg)
+
+                # Set the filename parameter
+                msg.add_header('Content-Disposition', 'attachment',
+                               filename=os.path.basename(attachment))
+                envelope.attach(msg)
+
+            return envelope.as_string()
