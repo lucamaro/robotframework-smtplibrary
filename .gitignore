@@ -63,3 +63,4 @@ docs/_build/
 # backup
 *~
 *.swp
+env.txt

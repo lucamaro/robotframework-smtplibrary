@@ -1,0 +1,84 @@
+*** Settings ***
+Library           SmtpLibrary
+Library           ImapLibrary
+Library           String
+Resource          ../resources/env.txt
+
+*** Test Cases ***
+Send mail
+    Prepare Connection    ${SMTP_SERVER}
+    Set From    ${FROM}
+    Add To Recipient    ${TO}
+    ${orig_body}=    Set Variable    This is a test
+    Set Body    ${orig_body}
+    Send Message
+    Quit
+    Close Connection
+    Open Mailbox    host=${IMAP_SERVER}    user=${FROM}    password=${PASS}
+    ${LATEST}    Wait For Email    sender=${FROM}    timeout=300
+    ${BODY}    Get Email Body    ${LATEST}
+    ${STR BODY}    Strip String    ${BODY}
+    Should Be Equal As Strings    ${STR BODY}    ${orig_body}
+
+Send mail via SSL
+    Prepare Ssl Connection    ${SMTP_SERVER}
+    Set From    ${FROM}
+    Add To Recipient    ${TO}
+    ${orig_body}=    Set Variable    This is a test
+    Set Body    ${orig_body}
+    Send Message
+    Quit
+    Close Connection
+    Open Mailbox    host=${IMAP_SERVER}    user=${FROM}    password=${PASS}
+    ${LATEST}    Wait For Email    sender=${FROM}    timeout=300
+    ${BODY}    Get Email Body    ${LATEST}
+    ${STR BODY}    Strip String    ${BODY}
+    Should Be Equal As Strings    ${STR BODY}    ${orig_body}
+
+HELO Command
+    Prepare Connection    ${SMTP_SERVER}
+    Connect
+    Helo
+    Quit
+    Close Connection
+
+EHLO Command
+    Prepare Connection    ${SMTP_SERVER}
+    Connect
+    Ehlo
+    Get Esmtp Features
+    Quit
+    Close Connection
+
+EHLO Command With Custom Name
+    Prepare Connection    ${SMTP_SERVER}
+    Present Client As    snarkypuppies
+    Connect
+    Ehlo
+    Get Esmtp Features
+    Quit
+    Close Connection
+
+Authentication
+    Prepare Connection    ${SMTP_SERVER}    25    ${USER}    ${PASS}
+    Connect
+    EHLO
+    Login
+    Quit
+    Close Connection
+
+Send Mail Wih Custom Header
+    Prepare Connection    ${SMTP_SERVER}
+    Set From    ${FROM}
+    Add To Recipient    ${TO}
+    Add Header    X-My-Custom    My custom header
+    ${orig_body}=    Set Variable    This is a test
+    Set Body    ${orig_body}
+    Send Message
+    Quit
+    Close Connection
+    Open Mailbox    host=${IMAP_SERVER}    user=${FROM}    password=${PASS}
+    ${LATEST}    Wait For Email    sender=${FROM}    timeout=300
+    ${BODY}    Get Email Body    ${LATEST}
+    ${STR BODY}    Strip String    ${BODY}
+    Should Be Equal As Strings    ${STR BODY}    ${orig_body}
