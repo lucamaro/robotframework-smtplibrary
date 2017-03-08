@@ -306,8 +306,6 @@ class SmtpLibrary(object):
             else:
                 envelope = MIMEText(self.body)
 
-            envelope['Subject'] = self.subject
-
             recipients = self.get_message_recipients()
 
             envelope['From'] = self.mail_from
