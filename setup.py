@@ -9,7 +9,6 @@
 # Copyright (c) 2016, Luca Maragnani <luca.maragnani@gmail.com>
 
 from setuptools import setup, find_packages
-from SmtpLibrary import __version__
 
 tests_require = [
     'mock',
@@ -25,7 +24,7 @@ tests_require = [
 
 setup(
     name='robotframework-smtplibrary',
-    version=__version__,
+    version="0.1.1",
     description='A SMTP email testing library for Robot Framework',
     long_description='''
 This library aims to perform common smtp operation to be used in robotframework
@@ -46,8 +45,7 @@ This library aims to perform common smtp operation to be used in robotframework
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        # add your dependencies here
-        # remember to use 'package-name>=x.y.z,<x.y+1.0' notation (this way you get bugfixes)
+        'robotframework'
     ],
     extras_require={
         'tests': tests_require,
