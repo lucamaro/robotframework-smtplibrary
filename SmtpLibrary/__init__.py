@@ -182,6 +182,32 @@ class SmtpLibrary(object):
         logger.info(result)
         return result
 
+    def starttls(self, keyfile=None, certfile=None):
+        '''
+        sends STARTTLS
+        optional: keyfile certfile
+        Returns tuple (smtp status code, message)
+        '''
+        logger.info("STARTTLS")
+        if keyfile is None and certfile is None:
+            result = self.smtp.starttls()
+        else:
+            result = self.smtp.starttls(keyfile, certfile)
+        logger.info(result)
+        return result
+
+    def data(self):
+        '''
+        Data command send email body with "MAIL FROM:", "RCPT TO:" and "DATA" commands
+        Returns tuple (smtp status code, message)
+        '''        
+        result = self.smtp.mail(self.message.mail_from)
+        result += self.smtp.rcpt(self.message.get_message_recipients())
+        
+        result += self.smtp.data(self.message.get_message_as_string())
+        logger.info(result)
+        return result
+
     def sendmail(self):
         '''
         Send email with "MAIL FROM:", "RCPT TO:" and "DATA" commands
