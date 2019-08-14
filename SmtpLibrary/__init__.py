@@ -178,7 +178,7 @@ class SmtpLibrary(object):
         Returns tuple (smtp status code, message)
         '''
         logger.info("Login with user " + self.user + " and password " + self.password)
-        result = self.smtp.login(self.user.encode('ascii'), self.password.encode('ascii'))
+        result = self.smtp.login(self.user, self.password)
         logger.info(result)
         return result
 
