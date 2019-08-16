@@ -13,36 +13,41 @@ path.append('SmtpLibrary')
 import SmtpLibrary
 import mock
 import unittest
+from unittest.mock import MagicMock
+
+# library = SmtpLibrary()
 
 class SmtpLibraryTests(unittest.TestCase):
 
     def setUp(self):
         """Instantiate the Smtp library class."""
-        self.library = SmtpLibrary()
+        self.library = SmtpLibrary.SmtpLibrary()
         self.password = 'password'
         self.port = 465
         self.user = 'my@domain.com'
         self.recipient = 'noreply@domain.com'
         self.host = 'my.smtp'
 
-    @mock.patch('SmtpLibrary.SMTP_SSL')
+    @mock.patch('smtplib.SMTP_SSL')
     def test_should_prepare_connection_ssl(self, mock_smtp):
         """Open mailbox should open secure connection to SMTP server
         with requested credentials.
         """
-        self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
-                                            password=self.password)
-        mock_smtp.assert_called_with(self.host, self.port)
+        self.library.prepare_ssl_connection(self.host, self.port, self.user,
+                                            self.password)
+        self.library.login()
         self.library.smtp.login.assert_called_with(self.user, self.password)
 
-    @mock.patch('SmtpLibrary.SMTP_SSL')
+    @mock.patch('smtplib.SMTP_SSL')
     def test_set_from(self, mock_smtp):
         """Test from email"""
         self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
                                             password=self.password)
-        mock_smtp.assert_called_with(self.host, self.port)
+        self.library.login()
+        # self.library._prepare_connection.assert_called_with(self.host, self.port)
         self.library.smtp.login.assert_called_with(self.user, self.password)
-        self.library.smtp.set_from(self.user)
+        self.library.set_from(self.user)
+        # self.library.smtp.set_from.assert_called_with(self.user)
 
     @mock.patch('SmtpLibrary.SMTP_SSL')
     def test_to_reciept(self, mock_smtp):
