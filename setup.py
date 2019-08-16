@@ -20,7 +20,7 @@ tests_require = [
     'ipdb',
     'coveralls',
     'sphinx',
-    'unittest'
+    'unittest',
 ]
 
 setup(
@@ -40,7 +40,7 @@ This library aims to perform common smtp operation to be used in robotframework
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache License 2.0 License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Operating System :: OS Independent',
     ],
     packages=find_packages(),
