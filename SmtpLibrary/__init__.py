@@ -34,7 +34,8 @@ from SmtpLibrary.version import __version__  # NOQA
 
 COMMASPACE = ', '
 
-class SmtpLibrary(object):
+
+class SmtpLibrary():
     """
     SMTP Client class
     """
@@ -59,7 +60,6 @@ class SmtpLibrary(object):
         self.user = user
         self.password = password
         self.client_hostname = socket.gethostname()
-
 
     def prepare_ssl_connection(self, host, port=465, user=None, password=None):
         """

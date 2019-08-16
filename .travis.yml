@@ -8,12 +8,18 @@
 language: python
 
 python:
-    - "2.7"
+    - "3.6"
 
 install:
     # install python requirements
-    - make setup
+    - pip install .
+    - pip install python-coveralls
+    - pip install pytest-cov
 
 script:
     # run tests
-    - make test
+    - pytest --cov src -v
+#    - make test
+
+after_success:
+  - coveralls
