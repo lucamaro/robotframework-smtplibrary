@@ -44,35 +44,39 @@ class SmtpLibraryTests(unittest.TestCase):
         self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
                                             password=self.password)
         self.library.login()
-        # self.library._prepare_connection.assert_called_with(self.host, self.port)
         self.library.smtp.login.assert_called_with(self.user, self.password)
         self.library.set_from(self.user)
-        # self.library.smtp.set_from.assert_called_with(self.user)
+        self.library.smtp.set_from(self.user)
 
-    # @mock.patch('SmtpLibrary.SMTP_SSL')
-    # def test_to_reciept(self, mock_smtp):
-    #     """"Test to email"""""
-    #     self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
-    #                                         password=self.password)
-    #     mock_smtp.assert_called_with(self.host, self.port)
-    #     self.library.smtp.login.assert_called_with(self.user, self.password)
-    #     self.library.smtp.add_to_recipient(self.recipient)
-    #
-    # @mock.patch('SmtpLibrary.SMTP_SSL')
-    # def test_send_message(self, mock_smtp):
-    #     """"Test email sent"""""
-    #     self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
-    #                                         password=self.password)
-    #     mock_smtp.assert_called_with(self.host, self.port)
-    #     self.library.smtp.login.assert_called_with(self.user, self.password)
-    #     self.library.smtp.set_from(self.user)
-    #     self.library.smtp.add_to_recipient(self.recipient)
-    #     self.library.smtp.send_message(self.user) is not None
-    #
-    # @mock.patch('SmtpLibrary.SMTP_SSL')
-    # def test_should_close_connection(self, mock_smtp):
-    #     """Close opened connection."""
-    #     self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
-    #                                         password=self.password)
-    #     self.library.close_connection()
-    #     self.library.smtp.close.assert_called_with()
+
+    @mock.patch('smtplib.SMTP_SSL')
+    def test_to_reciept(self, mock_smtp):
+        """"Test to email"""""
+        self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
+                                            password=self.password)
+        self.library.login()
+        self.library.smtp.login.assert_called_with(self.user, self.password)
+        self.library.set_from(self.user)
+        self.library.smtp.add_to_recipient(self.recipient)
+
+    @mock.patch('smtplib.SMTP_SSL')
+    def test_send_message(self, mock_smtp):
+        """"Test email sent"""""
+        self.library.prepare_ssl_connection(host=self.host, port=self.port, user=self.user,
+                                            password=self.password)
+        self.library.login()
+        self.library.smtp.login.assert_called_with(self.user, self.password)
+        self.library.set_from(self.user)
+        self.library.smtp.add_to_recipient(self.recipient)
+        self.library.smtp.send_message(self.user) is not None
+        self.library.smtp.send_message(self.recipient) is not None
+
+    @mock.patch('smtplib.SMTP_SSL')
+    def test_should_close_connection(self, mock_smtp):
+        """Close opened connection."""
+        self.library.prepare_ssl_connection(self.host, self.port, self.user,
+                                            self.password)
+        self.library.login()
+        self.library.smtp.login.assert_called_with(self.user, self.password)
+        self.library.smtp.close_connection()
+        self.library.smtp.close()
