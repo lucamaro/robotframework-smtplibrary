@@ -18,8 +18,7 @@ install:
 
 script:
     # run tests
-    - pytest --cov src -v
-#    - make test
+    - pytest --cov SmtpLibrary -v
 
 after_success:
   - coveralls
