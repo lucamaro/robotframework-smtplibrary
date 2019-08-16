@@ -20,6 +20,7 @@ tests_require = [
     'ipdb',
     'coveralls',
     'sphinx',
+    'unittest'
 ]
 
 setup(
