@@ -8,4 +8,4 @@
 # http://www.opensource.org/licenses/Apache-2.0
 # Copyright (c) 2016, Luca Maragnani <luca.maragnani@gmail.com>
 
-__version__ = '0.1.1'  # NOQA
+__version__ = '0.1.2'  # NOQA
