@@ -24,7 +24,7 @@ tests_require = [
 
 setup(
     name='robotframework-smtplibrary',
-    version="0.1.1",
+    version="0.1.2",
     description='A SMTP email testing library for Robot Framework',
     long_description='''
 This library aims to perform common smtp operation to be used in robotframework
