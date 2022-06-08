@@ -32,7 +32,7 @@ from robot.api import logger
 
 from SmtpLibrary.version import __version__  # NOQA
 
-COMMASPACE = ', '
+COMMASPACE = ','
 
 class SmtpLibrary(object):
     """
@@ -78,8 +78,19 @@ class SmtpLibrary(object):
     def add_to_recipient(self, recipient):
         """
         Add a recipient to "To:" list
-        """
         self.message.mail_to.append(recipient)
+       
+        """
+        if not recipient in self.message.mail_to:
+            self.message.mail_to.append(recipient)
+
+    def set_recipient(self, recipient):
+        """
+        Set the recipient To
+
+        """
+        if not recipient in self.message.mail_to:
+            self.message.mail_to=[recipient]
 
     def add_cc_recipient(self, recipient):
         """
@@ -318,7 +329,8 @@ class SmtpLibrary(object):
             '''
             recipients = []
             recipients.extend(self.mail_to)
-            recipients.extend(self.mail_cc)
+            if len(self.mail_cc) > 0:
+                recipients.extend(self.mail_cc)
             recipients.extend(self.mail_bcc)
             return recipients
 
@@ -336,7 +348,8 @@ class SmtpLibrary(object):
 
             envelope['From'] = self.mail_from
             envelope['To'] = COMMASPACE.join(self.mail_to)
-            envelope['Cc'] = COMMASPACE.join(self.mail_cc)
+            if len(self.mail_cc) > 0:
+                envelope['Cc'] = COMMASPACE.join(self.mail_cc)
 
             envelope['Subject'] = self.subject
 
